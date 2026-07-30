@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="GitGab/GitGab.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="GitGab.Tests/GitGab.Tests.csproj" />
+  </Folder>
+</Solution>

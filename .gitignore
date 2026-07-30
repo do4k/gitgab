@@ -1,0 +1,32 @@
+# .NET
+bin/
+obj/
+
+# User secrets - but keep appsettings.Development.json as template
+appsettings.*.json
+!appsettings.Development.json
+**/secrets.json
+**/secrets.json
+**/usersecrets/*
+
+# NuGet packages
+**/packages/**
+*.user
+*.cache
+*.suo
+*.userosscache
+
+# GitGab specific
+cache/
+output/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
