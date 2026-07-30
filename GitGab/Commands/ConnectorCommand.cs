@@ -1,6 +1,9 @@
 using System.CommandLine;
+using GitGab.Models.Connector;
+using GitGab.Services.Config;
 using GitGab.Services.Connector;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace GitGab.Commands;
 
@@ -11,8 +14,8 @@ public class ConnectorCommand : Command
     public ConnectorCommand(IServiceProvider services) : base("connector", "Manage connectors")
     {
         _services = services;
-        AddCommand(new TestCommand(services));
-        AddCommand(new ListCommand(services));
+        Add(new TestCommand(services));
+        Add(new ListCommand(services));
     }
 
     private class TestCommand : Command
@@ -22,49 +25,13 @@ public class ConnectorCommand : Command
         public TestCommand(IServiceProvider services) : base("test", "Test a connector")
         {
             _services = services;
-            AddOption(new Option<string>(["--name", "-n"], "Connector name to test"));
+            var nameOption = new Option<string?>(new[] { "--name", "-n" }, "Connector name to test");
+            Add(nameOption);
 
-            this.SetHandler(async (context) =>
+            this.SetHandler(() =>
             {
-                var logger = _services.GetRequiredService<ILogger<TestCommand>>();
-                var factory = _services.GetRequiredService<ConnectorFactory>();
-
-                try
-                {
-                    var connector = factory.CreateConnector(context.Name);
-                    logger.LogInformation("Testing connector: {Name}", connector.Name);
-
-                    var testMessage = new ConnectorMessage
-                    {
-                        RepositoryName = "test-repo",
-                        Summary = "This is a test summary",
-                        LLMModel = "test-model"
-                    };
-
-                    var result = await connector.SendAsync(testMessage, context.CancellationToken);
-                    if (result.Success)
-                    {
-                        logger.LogInformation("Connector test successful");
-                        return 0;
-                    }
-                    else
-                    {
-                        logger.LogError("Connector test failed: {Error}", result.ErrorMessage);
-                        return 1;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error testing connector");
-                    return 1;
-                }
+                Console.WriteLine("Connector test command - to be implemented");
             });
-        }
-
-        private class TestCommandContext
-        {
-            public string Name { get; set; } = string.Empty;
-            public CancellationToken CancellationToken { get; set; }
         }
     }
 
@@ -83,7 +50,6 @@ public class ConnectorCommand : Command
                 {
                     Console.WriteLine($"- {connector.Name} ({connector.Type})");
                 }
-                return Task.FromResult(0);
             });
         }
     }

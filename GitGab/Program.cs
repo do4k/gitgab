@@ -1,5 +1,6 @@
 using System.CommandLine;
 using GitGab.Commands;
+using GitGab.Models.Config;
 using GitGab.Services.Config;
 using GitGab.Services.Connector;
 using GitGab.Services.Git;
@@ -20,7 +21,6 @@ public static class Program
         
         var rootCommand = new RootCommand("GitGab - AI-Powered Repository Change Summarizer");
         
-        // Register commands
         rootCommand.AddCommand(new AnalyzeCommand(host.Services));
         rootCommand.AddCommand(new RepoCommand());
         rootCommand.AddCommand(new ConnectorCommand(host.Services));
@@ -51,10 +51,7 @@ public static class Program
             })
             .ConfigureServices((context, services) =>
             {
-                // Configuration
                 services.Configure<AppSettings>(context.Configuration.GetSection("AppSettings"));
-                
-                // Services
                 services.AddSingleton<IConfiguration>(context.Configuration);
                 services.AddSingleton<ConfigurationService>();
                 services.AddSingleton<GitService>();
@@ -64,10 +61,7 @@ public static class Program
                 services.AddSingleton<PromptBuilder>();
                 services.AddSingleton<ConnectorFactory>();
                 
-                // HTTP Client with Polly retries
-                services.AddHttpClient("GitGabHttpClient")
-                    .AddTransientHttpErrorPolicy(policy => 
-                        policy.WaitAndRetryAsync(3, _ => TimeSpan.FromSeconds(2)));
+                services.AddHttpClient("GitGabHttpClient");
             });
     }
 }

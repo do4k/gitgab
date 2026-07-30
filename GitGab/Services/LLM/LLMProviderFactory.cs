@@ -1,4 +1,5 @@
 using GitGab.Models.Config;
+using GitGab.Services.Config;
 using GitGab.Services.LLM.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -1,3 +1,4 @@
+using System.Text;
 using GitGab.Models.Config;
 using GitGab.Models.Git;
 using Microsoft.Extensions.Logging;
@@ -44,11 +45,9 @@ public class PromptBuilder
         if (diffResult.Commits.Count > 0)
         {
             sb.AppendLine("Recent commits:");
-            var commitCount = 0;
             foreach (var commit in diffResult.Commits.Take(5))
             {
                 sb.AppendLine("  - " + commit.ShortHash + " " + commit.Message + " (" + commit.AuthorName + ")");
-                commitCount++;
             }
             if (diffResult.Commits.Count > 5)
             {

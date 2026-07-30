@@ -1,7 +1,9 @@
+using System.Text;
 using GitGab.Models.Config;
 using GitGab.Models.Connector;
 using GitGab.Models.Git;
 using GitGab.Models.LLM;
+using GitGab.Services.Config;
 using GitGab.Services.LLM;
 using Microsoft.Extensions.Logging;
 
@@ -36,10 +38,8 @@ public class SummaryService
         var llmConfig = _configService.GetLLMConfig();
         var promptConfig = _configService.GetPromptConfig();
 
-        // Build the prompt
         var prompt = _promptBuilder.BuildPrompt(diffResult, promptConfig.Template);
 
-        // Create LLM request
         var request = new PromptRequest
         {
             Model = llmConfig.Model,
@@ -52,7 +52,6 @@ public class SummaryService
             MaxTokens = llmConfig.MaxTokens
         };
 
-        // Get provider and generate
         var provider = _providerFactory.CreateProvider(providerName);
         _logger.LogDebug("Using LLM provider: {Provider}", provider.Name);
 
@@ -72,9 +71,6 @@ public class SummaryService
         return message;
     }
 
-    /// <summary>
-    /// Generate a simple text summary without calling an LLM (for testing/dry-run)
-    /// </summary>
     public ConnectorMessage GenerateSimpleSummary(DiffResult diffResult)
     {
         var sb = new StringBuilder();
@@ -92,7 +88,7 @@ public class SummaryService
         if (diffResult.Commits.Count > 0)
         {
             sb.AppendLine("## Commits");
-            foreach (var commit in diffResult.Commits.Take(10)) // Limit to first 10
+            foreach (var commit in diffResult.Commits.Take(10))
             {
                 sb.AppendLine($"- **{commit.ShortHash}** {commit.Message} ({commit.AuthorName})");
             }

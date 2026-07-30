@@ -1,4 +1,5 @@
 using GitGab.Models.Config;
+using GitGab.Services.Config;
 using GitGab.Services.Connector.Providers;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,12 +22,14 @@ public class ConnectorFactory
         var config = connectors.FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
             ?? throw new ArgumentException($"Connector {name} not found");
 
+        var httpClientFactory = _serviceProvider.GetRequiredService<IHttpClientFactory>();
+
         return config.Type.ToLower() switch
         {
-            "slack" => new SlackConnector((SlackConnectorConfig)config),
+            "slack" => new SlackConnector((SlackConnectorConfig)config, httpClientFactory),
             "email" => new EmailConnector((EmailConnectorConfig)config),
             "file" => new FileConnector((FileConnectorConfig)config),
-            "webhook" => new WebhookConnector((WebhookConnectorConfig)config),
+            "webhook" => new WebhookConnector((WebhookConnectorConfig)config, httpClientFactory),
             "console" => new ConsoleConnector((ConsoleConnectorConfig)config),
             _ => throw new ArgumentException($"Unknown connector type: {config.Type}")
         };

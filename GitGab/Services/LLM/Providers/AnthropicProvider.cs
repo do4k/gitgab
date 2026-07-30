@@ -1,8 +1,9 @@
-using GitGab.Models.Config;
-using GitGab.Models.LLM;
-using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
+using GitGab.Models.Config;
+using GitGab.Models.LLM;
+using GitGab.Services.Config;
+using Microsoft.Extensions.Logging;
 
 namespace GitGab.Services.LLM.Providers;
 
@@ -32,7 +33,6 @@ public class AnthropicProvider : ILLMProvider
 
         var url = $"{baseUrl.TrimEnd('/')}/v1/messages";
 
-        // Build messages array
         var messages = new List<object>();
         
         if (!string.IsNullOrEmpty(request.SystemMessage))
@@ -54,24 +54,23 @@ public class AnthropicProvider : ILLMProvider
         };
 
         var jsonBody = JsonSerializer.Serialize(requestBody, _jsonOptions);
-        var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+        var stringContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
         var httpClient = _httpClientFactory.CreateClient("GitGabHttpClient");
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
-        requestMessage.Headers.Add("x-api-key", apiKey);
-        requestMessage.Headers.Add("anthropic-version", "2023-06-01");
-        requestMessage.Content = content;
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, url);
+        httpRequest.Headers.Add("x-api-key", apiKey);
+        httpRequest.Headers.Add("anthropic-version", "2023-06-01");
+        httpRequest.Content = stringContent;
 
         _logger.LogDebug("Sending request to Anthropic API");
 
-        var response = await httpClient.SendAsync(requestMessage, ct);
+        var response = await httpClient.SendAsync(httpRequest, ct);
         response.EnsureSuccessStatusCode();
 
         var responseJson = await response.Content.ReadAsStringAsync(ct);
 
         using var jsonDoc = JsonDocument.Parse(responseJson);
-        var contentElement = jsonDoc.RootElement.GetProperty("content");
-        var contentText = string.Join("\n", contentElement.EnumerateArray().Select(c => c.GetString()));
+        var content = string.Join("\n", jsonDoc.RootElement.GetProperty("content").EnumerateArray().Select(c => c.GetString()));
         var modelUsed = jsonDoc.RootElement.GetProperty("model").GetString() ?? model;
 
         var usage = jsonDoc.RootElement.GetProperty("usage");
@@ -80,7 +79,7 @@ public class AnthropicProvider : ILLMProvider
 
         return new PromptResponse
         {
-            Content = contentText,
+            Content = content,
             Model = modelUsed,
             Usage = new UsageInfo
             {

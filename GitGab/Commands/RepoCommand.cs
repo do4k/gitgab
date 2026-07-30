@@ -6,9 +6,9 @@ public class RepoCommand : Command
 {
     public RepoCommand() : base("repo", "Manage repositories")
     {
-        AddCommand(new ListCommand());
-        AddCommand(new AddCommand());
-        AddCommand(new RemoveCommand());
+        Add(new ListCommand());
+        Add(new AddCommand());
+        Add(new RemoveCommand());
     }
 
     private class ListCommand : Command
@@ -18,7 +18,6 @@ public class RepoCommand : Command
             this.SetHandler(() =>
             {
                 Console.WriteLine("Repo list command - to be implemented");
-                return Task.FromResult(0);
             });
         }
     }
@@ -27,16 +26,21 @@ public class RepoCommand : Command
     {
         public AddCommand() : base("add", "Add a new repository")
         {
-            AddOption(new Option<string>(["--name", "-n"], "Repository name"));
-            AddOption(new Option<string>(["--url", "-u"], "Repository URL"));
-            AddOption(new Option<string>(["--branch", "-b"], "Branch to track") { DefaultValue = "main" });
-            AddOption(new Option<string>(["--auth-type"], "Authentication type (https/ssh)") { DefaultValue = "https" });
-            AddOption(new Option<string>(["--token"], "Access token"));
+            var nameOption = new Option<string>(new[] { "--name", "-n" }, "Repository name");
+            var urlOption = new Option<string>(new[] { "--url", "-u" }, "Repository URL");
+            var branchOption = new Option<string>(new[] { "--branch", "-b" }, () => "main", "Branch to track");
+            var authTypeOption = new Option<string>(new[] { "--auth-type" }, () => "https", "Authentication type");
+            var tokenOption = new Option<string>(new[] { "--token" }, "Access token");
+
+            this.Add(nameOption);
+            this.Add(urlOption);
+            this.Add(branchOption);
+            this.Add(authTypeOption);
+            this.Add(tokenOption);
 
             this.SetHandler(() =>
             {
                 Console.WriteLine("Repo add command - to be implemented");
-                return Task.FromResult(0);
             });
         }
     }
@@ -45,12 +49,12 @@ public class RepoCommand : Command
     {
         public RemoveCommand() : base("remove", "Remove a repository")
         {
-            AddOption(new Option<string>(["--name", "-n"], "Repository name"));
+            var nameOption = new Option<string>(new[] { "--name", "-n" }, "Repository name");
+            this.Add(nameOption);
 
             this.SetHandler(() =>
             {
                 Console.WriteLine("Repo remove command - to be implemented");
-                return Task.FromResult(0);
             });
         }
     }

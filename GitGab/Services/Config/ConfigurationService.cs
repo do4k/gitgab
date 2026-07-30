@@ -1,6 +1,6 @@
 using GitGab.Models.Config;
 using Microsoft.Extensions.Configuration;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace GitGab.Services.Config;
 
@@ -46,34 +46,28 @@ public class ConfigurationService
     public List<ConnectorConfig> GetConnectors()
     {
         var connectors = new List<ConnectorConfig>();
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            Converters = { new JsonStringEnumConverter() }
-        };
-        
         var connectorSection = _configuration.GetSection("Connectors");
         var children = connectorSection.GetChildren();
         
         foreach (var child in children)
         {
             var type = child["Type"] ?? string.Empty;
-            var json = JsonSerializer.Serialize(child.GetChildren().ToDictionary(x => x.Key, x => x.Value));
+            var name = child["Name"] ?? string.Empty;
             
-            ConnectorConfig? connector = type.ToLower() switch
+            if (string.IsNullOrEmpty(type) || string.IsNullOrEmpty(name))
+                continue;
+            
+            // Create type-specific connector configs
+            ConnectorConfig connector = type.ToLower() switch
             {
-                "slack" => JsonSerializer.Deserialize<SlackConnectorConfig>(json, options),
-                "email" => JsonSerializer.Deserialize<EmailConnectorConfig>(json, options),
-                "file" => JsonSerializer.Deserialize<FileConnectorConfig>(json, options),
-                "webhook" => JsonSerializer.Deserialize<WebhookConnectorConfig>(json, options),
-                "console" => JsonSerializer.Deserialize<ConsoleConnectorConfig>(json, options),
-                _ => new ConnectorConfig { Type = type, Name = child["Name"] ?? string.Empty }
+                "slack" => new SlackConnectorConfig { Type = type, Name = name, WebhookUrl = child["WebhookUrl"] ?? "" },
+                "email" => new EmailConnectorConfig { Type = type, Name = name, From = child["From"] ?? "" },
+                "file" => new FileConnectorConfig { Type = type, Name = name, Path = child["Path"] ?? "" },
+                "webhook" => new WebhookConnectorConfig { Type = type, Name = name, Url = child["Url"] ?? "" },
+                _ => new ConsoleConnectorConfig { Type = type, Name = name }
             };
             
-            if (connector != null)
-            {
-                connectors.Add(connector);
-            }
+            connectors.Add(connector);
         }
         
         return connectors;

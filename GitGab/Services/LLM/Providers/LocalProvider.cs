@@ -1,14 +1,12 @@
-using GitGab.Models.Config;
-using GitGab.Models.LLM;
-using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
+using GitGab.Models.Config;
+using GitGab.Models.LLM;
+using GitGab.Services.Config;
+using Microsoft.Extensions.Logging;
 
 namespace GitGab.Services.LLM.Providers;
 
-/// <summary>
-/// Provider for local/self-hosted LLMs via OpenAI-compatible API
-/// </summary>
 public class LocalProvider : ILLMProvider
 {
     private readonly ILogger<LocalProvider> _logger;
@@ -39,7 +37,6 @@ public class LocalProvider : ILLMProvider
 
         var url = $"{baseUrl.TrimEnd('/')}/v1/chat/completions";
 
-        // Build messages array
         var messages = new List<object>();
         
         if (!string.IsNullOrEmpty(request.SystemMessage))
@@ -62,22 +59,21 @@ public class LocalProvider : ILLMProvider
         };
 
         var jsonBody = JsonSerializer.Serialize(requestBody, _jsonOptions);
-        var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+        var stringContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
         var httpClient = _httpClientFactory.CreateClient("GitGabHttpClient");
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
-        requestMessage.Content = content;
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, url);
+        httpRequest.Content = stringContent;
 
         _logger.LogDebug("Sending request to local LLM API at {Url}", url);
 
-        var response = await httpClient.SendAsync(requestMessage, ct);
+        var response = await httpClient.SendAsync(httpRequest, ct);
         response.EnsureSuccessStatusCode();
 
         var responseJson = await response.Content.ReadAsStringAsync(ct);
 
         using var jsonDoc = JsonDocument.Parse(responseJson);
-        var choice = jsonDoc.RootElement.GetProperty("choices")[0];
-        var contentText = choice.GetProperty("message").GetProperty("content").GetString() ?? "";
+        var content = jsonDoc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
         var modelUsed = jsonDoc.RootElement.GetProperty("model").GetString() ?? model;
 
         var usage = jsonDoc.RootElement.GetProperty("usage");
@@ -86,7 +82,7 @@ public class LocalProvider : ILLMProvider
 
         return new PromptResponse
         {
-            Content = contentText,
+            Content = content,
             Model = modelUsed,
             Usage = new UsageInfo
             {
