@@ -552,7 +552,7 @@ HTML email with similar content, plus:
 gitgab/
 ├── spec.md                    # This document
 ├── README.md
-├── GitGab.sln                # Visual Studio solution
+├── GitGab.slnx               # Solution file (new XML format for .NET 9+)
 ├── GitGab/
 │   ├── GitGab.csproj          # Main project
 │   ├── Program.cs            # Entry point
