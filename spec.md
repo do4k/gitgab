@@ -348,7 +348,7 @@ POST /api/v1/connectors/test
 ## Dependencies
 
 ### Required
-- .NET 8.0+ (LTS)
+- .NET 11 SDK (latest stable preview or release)
 - Git 2.30+
 - NuGet packages:
   - `LibGit2Sharp` (Git operations)
@@ -632,4 +632,4 @@ gitgab/
 *Document Version: 0.2.0*  
 *Last Updated: 2026-07-30*  
 *Status: Draft / Pre-Implementation*  
-*Implementation Language: C# / .NET 8.0+*
+*Implementation Language: C# / .NET 11*
