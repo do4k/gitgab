@@ -88,28 +88,30 @@ GitGab is a tool that monitors one or more git repositories, computes diffs over
 ### Component Details
 
 #### Configuration Management
-- YAML/JSON/TOML config file support
-- Environment variable overrides
-- Command-line argument overrides
-- Multiple config profiles (e.g., `prod`, `dev`, `personal`)
-- Secure credential storage (encrypted or external secret management)
+- YAML/JSON config file support (`Microsoft.Extensions.Configuration` + `YamlDotNet`)
+- Environment variable overrides (built-in .NET configuration)
+- Command-line argument overrides (`System.CommandLine` or `Microsoft.Extensions.Configuration.CommandLine`)
+- Multiple config profiles (e.g., `appsettings.Production.json`, `appsettings.Development.json`)
+- Secure credential storage (Azure Key Vault, AWS Secrets Manager, or encrypted user secrets)
+- Strongly-typed configuration via C# classes with `IOptions<T>` pattern
 
 #### Repository Manager
-- Git operations via libgit2 or git CLI wrapper
-- Connection pooling for concurrent repo operations
-- Automatic retry with exponential backoff
+- Git operations via `LibGit2Sharp` (native .NET Git library)
+- Async/await pattern for concurrent repo operations
+- Automatic retry with exponential backoff (using `Polly`)
 - Shallow clone support for large repos
 - Repository health checks and error handling
+- Cancellation support via `CancellationToken`
 
 #### Diff Engine
-- Efficient diff computation using git native commands
-- Caching layer for performance (store computed diffs)
-- Parallel diff computation across repositories
+- Efficient diff computation using `LibGit2Sharp` tree/diff APIs
+- Caching layer for performance (store computed diffs) - `Microsoft.Extensions.Caching.Memory`
+- Parallel diff computation across repositories (`Task.WhenAll`)
 - Filter by:
   - File extensions
   - Directory paths
   - Author emails
-  - Commit messages (regex)
+  - Commit messages (regex via `System.Text.RegularExpressions`)
 
 #### LLM Provider Abstraction
 - Unified interface for all LLM providers
@@ -136,11 +138,11 @@ GitGab is a tool that monitors one or more git repositories, computes diffs over
   ```
 
 #### Prompt Builder
-- Template system for summary prompts
+- Template system for summary prompts (string interpolation or `Scriban` for advanced templating)
 - Dynamic prompt construction based on diff context
 - Support for:
   - Markdown output
-  - JSON output (structured data)
+  - JSON output (structured data via `System.Text.Json`)
   - Custom formats
 - Prompt versioning and A/B testing
 
@@ -153,13 +155,15 @@ GitGab is a tool that monitors one or more git repositories, computes diffs over
   - Author information
   - File statistics
   - Linked issues/PRs (if detectable from commit messages)
+- Uses `System.Text.Json` for serialization/deserialization
 
 #### Connector Manager
-- Pluggable connector architecture
-- Retry logic with exponential backoff
-- Rate limiting per connector type
-- Template system for output formatting
+- Pluggable connector architecture (DI via `Microsoft.Extensions.DependencyInjection`)
+- Retry logic with exponential backoff (`Polly` library)
+- Rate limiting per connector type (`Polly` rate limiting)
+- Template system for output formatting (string templates or `Scriban`)
 - Support for multiple connectors per summary
+- Async I/O throughout (`HttpClient`, streams)
 
 ## Configuration Schema
 
@@ -344,31 +348,38 @@ POST /api/v1/connectors/test
 ## Dependencies
 
 ### Required
-- Python 3.11+
+- .NET 8.0+ (LTS)
 - Git 2.30+
-- pip dependencies:
-  - `gitpython` or `pygit2`
-  - `requests` or `httpx`
-  - `pydantic` (configuration validation)
-  - `jinja2` (templating)
-  - `schedule` or `croniter` (scheduling)
+- NuGet packages:
+  - `LibGit2Sharp` (Git operations)
+  - `Microsoft.Extensions.Http` (HTTP client)
+  - `Microsoft.Extensions.Configuration` (configuration with YAML/JSON support)
+  - `Microsoft.Extensions.DependencyInjection` (DI container)
+  - `Microsoft.Extensions.Logging` (structured logging)
+  - `YamlDotNet` (YAML configuration support)
+  - `NCrontab` (cron scheduling)
+  - `Polly` (retry/backoff policies)
 
 ### LLM Provider SDKs (optional, for native API support)
-- `google-generativeai` (Gemini)
-- `openai` (OpenAI)
-- `anthropic` (Anthropic)
+- `Google.Cloud.AI.GenerativeLanguage` (Gemini - via Google Cloud SDK)
+- `OpenAI` (OpenAI - community package)
+- HTTP client for Anthropic and other providers
 
 ### Connector Dependencies
-- `slack-sdk` (Slack)
-- `aiohttp` or similar for async HTTP (webhooks)
+- `Slack.Webhooks` (Slack)
+- `MailKit` (SMTP/Email)
+- `Microsoft.Extensions.Http` (webhooks, generic HTTP)
+- `System.Net.Http.Json` (JSON HTTP utilities)
 
 ## Deployment Options
 
-1. **CLI Tool**: Single binary, run via cron
-2. **Docker Container**: For easy deployment
-3. **System Service**: Run as daemon with scheduling
-4. **Kubernetes**: CronJob or Deployment with API
-5. **GitHub Action**: For repo-specific summaries
+1. **CLI Tool**: Self-contained executable, run via cron or Task Scheduler
+2. **Docker Container**: Cross-platform deployment with .NET Docker images
+3. **Windows Service**: Run as a background service on Windows
+4. **Linux Daemon**: Run as systemd service on Linux
+5. **Kubernetes**: CronJob or Deployment with API
+6. **GitHub Action**: For repo-specific summaries
+7. **Azure App Service / AWS**: PaaS deployment options
 
 ## Environment Variables
 
@@ -541,51 +552,84 @@ HTML email with similar content, plus:
 gitgab/
 ├── spec.md                    # This document
 ├── README.md
-├── pyproject.toml             # Python project config
-├── src/
-│   └── gitgab/
-│       ├── __init__.py
-│       ├── main.py            # CLI entry point
-│       ├── config.py          # Configuration management
-│       ├── repo/
-│       │   ├── manager.py     # Repository management
-│       │   ├── git_client.py  # Git operations
-│       │   └── models.py      # Repo data models
-│       ├── diff/
-│       │   ├── engine.py      # Diff computation
-│       │   ├── formatter.py   # Diff formatting for LLM
-│       │   └── models.py
-│       ├── llm/
-│       │   ├── provider.py    # LLM provider interface
-│       │   ├── gemini.py      # Gemini implementation
-│       │   ├── openai.py      # OpenAI implementation
-│       │   ├── anthropic.py   # Anthropic implementation
-│       │   └── local.py       # Local LLM support
-│       ├── summary/
-│       │   ├── generator.py   # Summary generation
-│       │   └── prompt.py      # Prompt building
-│       ├── connector/
-│       │   ├── base.py        # Connector interface
-│       │   ├── slack.py       # Slack connector
-│       │   ├── email.py       # Email connector
-│       │   ├── file.py        # File connector
-│       │   ├── webhook.py     # Webhook connector
-│       │   └── console.py     # Console output
-│       └── server/            # Optional HTTP server
-│           ├── app.py
-│           └── routes.py
-├── tests/
-│   ├── unit/
-│   └── integration/
+├── GitGab.sln                # Visual Studio solution
+├── GitGab/
+│   ├── GitGab.csproj          # Main project
+│   ├── Program.cs            # Entry point
+│   ├── appsettings.json       # Default configuration
+│   ├── appsettings.Development.json
+│   ├── Models/
+│   │   ├── Config/
+│   │   │   ├── AppSettings.cs
+│   │   │   ├── RepositoryConfig.cs
+│   │   │   ├── LLMConfig.cs
+│   │   │   └── ConnectorConfig.cs
+│   │   ├── Git/
+│   │   │   ├── RepositoryInfo.cs
+│   │   │   ├── CommitInfo.cs
+│   │   │   ├── DiffResult.cs
+│   │   │   └── GitStats.cs
+│   │   ├── LLM/
+│   │   │   ├── PromptRequest.cs
+│   │   │   ├── PromptResponse.cs
+│   │   │   └── UsageInfo.cs
+│   │   └── Connector/
+│   │       ├── ConnectorMessage.cs
+│   │       └── ConnectorResult.cs
+│   ├── Services/
+│   │   ├── Config/
+│   │   │   ├── ConfigurationService.cs
+│   │   │   └── SecretResolver.cs
+│   │   ├── Git/
+│   │   │   ├── GitService.cs          # Repository management
+│   │   │   └── DiffService.cs         # Diff computation
+│   │   ├── LLM/
+│   │   │   ├── ILLMProvider.cs        # Provider interface
+│   │   │   ├── LLMProviderFactory.cs
+│   │   │   ├── GeminiProvider.cs      # Gemini implementation
+│   │   │   ├── OpenAiProvider.cs     # OpenAI implementation
+│   │   │   ├── AnthropicProvider.cs  # Anthropic implementation
+│   │   │   └── LocalProvider.cs      # Local LLM support
+│   │   ├── Summary/
+│   │   │   ├── SummaryService.cs      # Summary generation
+│   │   │   └── PromptBuilder.cs       # Prompt building
+│   │   └── Connector/
+│   │       ├── IConnector.cs          # Connector interface
+│   │       ├── ConnectorFactory.cs
+│   │       ├── SlackConnector.cs
+│   │       ├── EmailConnector.cs
+│   │       ├── FileConnector.cs
+│   │       ├── WebhookConnector.cs
+│   │       └── ConsoleConnector.cs
+│   ├── Commands/
+│   │   ├── AnalyzeCommand.cs
+│   │   ├── RepoCommand.cs
+│   │   ├── ConnectorCommand.cs
+│   │   └── ConfigCommand.cs
+│   └── Server/
+│       ├── Controllers/
+│       │   ├── AnalyzeController.cs
+│       │   ├── ReposController.cs
+│       │   └── ConnectorsController.cs
+│       ├── Program.cs
+│       └── Startup.cs
+├── GitGab.Tests/
+│   ├── GitGab.Tests.csproj
+│   ├── Unit/
+│   │   ├── Services/
+│   │   └── Models/
+│   └── Integration/
 ├── docs/
 │   └── usage.md
 └── .github/
     └── workflows/
+        ├── build.yml
         └── test.yml
 ```
 
 ---
 
-*Document Version: 0.1.0*  
+*Document Version: 0.2.0*  
 *Last Updated: 2026-07-30*  
-*Status: Draft / Pre-Implementation*
+*Status: Draft / Pre-Implementation*  
+*Implementation Language: C# / .NET 8.0+*
