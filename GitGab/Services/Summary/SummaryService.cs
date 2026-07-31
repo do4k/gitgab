@@ -74,7 +74,7 @@ public class SummaryService
     public ConnectorMessage GenerateSimpleSummary(DiffResult diffResult)
     {
         var sb = new StringBuilder();
-        
+
         sb.AppendLine($"# GitGab Summary for {diffResult.Repository.Name}");
         sb.AppendLine($"## Period: {diffResult.From} to {diffResult.To}");
         sb.AppendLine();
@@ -84,7 +84,7 @@ public class SummaryService
         sb.AppendLine($"- **Lines Added:** {diffResult.Stats.LinesAdded}");
         sb.AppendLine($"- **Lines Removed:** {diffResult.Stats.LinesRemoved}");
         sb.AppendLine();
-        
+
         if (diffResult.Commits.Count > 0)
         {
             sb.AppendLine("## Commits");

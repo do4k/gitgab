@@ -18,15 +18,15 @@ public static class Program
     public static async Task<int> Main(string[] args)
     {
         var host = CreateHostBuilder(args).Build();
-        
+
         var rootCommand = new RootCommand("GitGab - AI-Powered Repository Change Summarizer");
-        
+
         rootCommand.AddCommand(new AnalyzeCommand(host.Services));
         rootCommand.AddCommand(new RepoCommand());
         rootCommand.AddCommand(new ConnectorCommand(host.Services));
         rootCommand.AddCommand(new ConfigCommand());
         rootCommand.AddCommand(new ServerCommand());
-        
+
         return await rootCommand.InvokeAsync(args);
     }
 
@@ -60,7 +60,7 @@ public static class Program
                 services.AddSingleton<SummaryService>();
                 services.AddSingleton<PromptBuilder>();
                 services.AddSingleton<ConnectorFactory>();
-                
+
                 services.AddHttpClient("GitGabHttpClient");
             });
     }

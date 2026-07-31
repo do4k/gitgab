@@ -34,12 +34,12 @@ public class AnthropicProvider : ILLMProvider
         var url = $"{baseUrl.TrimEnd('/')}/v1/messages";
 
         var messages = new List<object>();
-        
+
         if (!string.IsNullOrEmpty(request.SystemMessage))
         {
             messages.Add(new { role = "system", content = request.SystemMessage });
         }
-        
+
         foreach (var msg in request.Messages)
         {
             messages.Add(new { role = msg.Role, content = msg.Content });

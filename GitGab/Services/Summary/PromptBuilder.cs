@@ -31,7 +31,7 @@ public class PromptBuilder
         sb.AppendLine("Lines added: " + diffResult.Stats.LinesAdded);
         sb.AppendLine("Lines removed: " + diffResult.Stats.LinesRemoved);
         sb.AppendLine();
-        
+
         if (diffResult.Stats.FilesByExtension.Count > 0)
         {
             sb.AppendLine("Files by type:");
@@ -41,7 +41,7 @@ public class PromptBuilder
             }
             sb.AppendLine();
         }
-        
+
         if (diffResult.Commits.Count > 0)
         {
             sb.AppendLine("Recent commits:");
@@ -54,7 +54,7 @@ public class PromptBuilder
                 sb.AppendLine("  ... and " + (diffResult.Commits.Count - 5) + " more commits");
             }
         }
-        
+
         return sb.ToString();
     }
 }

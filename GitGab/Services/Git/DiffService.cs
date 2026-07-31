@@ -22,7 +22,7 @@ public class DiffService
         var endDate = DateTimeOffset.UtcNow;
         var startDate = endDate - TimeSpan.FromDays(days) - TimeSpan.FromHours(hours) - TimeSpan.FromMinutes(minutes);
 
-        _logger.LogInformation("Getting diff for {Name} from {Start} to {End}", 
+        _logger.LogInformation("Getting diff for {Name} from {Start} to {End}",
             repoInfo.Name, startDate, endDate);
 
         var fromSpec = startDate.ToString("yyyy-MM-dd");
@@ -41,7 +41,7 @@ public class DiffService
         return _gitService.GetDiff(repoInfo, "last-tag", "HEAD");
     }
 
-    private (int days, int hours, int minutes) ParseTimeWindow(string timeWindow)
+    internal (int days, int hours, int minutes) ParseTimeWindow(string timeWindow)
     {
         if (string.IsNullOrEmpty(timeWindow) || timeWindow == "P7D")
         {
@@ -56,7 +56,7 @@ public class DiffService
         {
             var rest = timeWindow.Substring(1);
             var parts = rest.Split('T');
-            
+
             if (parts.Length > 0 && !string.IsNullOrEmpty(parts[0]))
             {
                 var dateParts = parts[0];

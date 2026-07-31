@@ -48,15 +48,15 @@ public class ConfigurationService
         var connectors = new List<ConnectorConfig>();
         var connectorSection = _configuration.GetSection("Connectors");
         var children = connectorSection.GetChildren();
-        
+
         foreach (var child in children)
         {
             var type = child["Type"] ?? string.Empty;
             var name = child["Name"] ?? string.Empty;
-            
+
             if (string.IsNullOrEmpty(type) || string.IsNullOrEmpty(name))
                 continue;
-            
+
             // Create type-specific connector configs
             ConnectorConfig connector = type.ToLower() switch
             {
@@ -66,10 +66,10 @@ public class ConfigurationService
                 "webhook" => new WebhookConnectorConfig { Type = type, Name = name, Url = child["Url"] ?? "" },
                 _ => new ConsoleConnectorConfig { Type = type, Name = name }
             };
-            
+
             connectors.Add(connector);
         }
-        
+
         return connectors;
     }
 

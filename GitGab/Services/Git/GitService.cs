@@ -43,8 +43,21 @@ public class GitService
         }
 
         _logger.LogInformation("Cloning repository {Name} from {Url}", config.Name, config.Url);
-        _logger.LogWarning("Git clone implementation not yet complete - returning stub");
-        
+        _logger.LogWarning("Git clone implementation not yet complete - using stub");
+
+        // Stub implementation: just create the directory structure
+        try
+        {
+            Directory.CreateDirectory(repoInfo.LocalPath);
+            repoInfo.IsCloned = true;
+            _logger.LogInformation("Created repository directory for {Name} at {Path}", config.Name, repoInfo.LocalPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create repository directory for {Name}", config.Name);
+            throw new InvalidOperationException($"Failed to clone repository: {ex.Message}", ex);
+        }
+
         return repoInfo;
     }
 
@@ -57,7 +70,8 @@ public class GitService
         }
 
         _logger.LogInformation("Pulling latest changes for {Name}", repoInfo.Name);
-        _logger.LogWarning("Git pull implementation not yet complete");
+        _logger.LogWarning("Git pull implementation not yet complete - using stub");
+        // Stub implementation: do nothing
     }
 
     public DiffResult GetDiff(RepositoryInfo repoInfo, string fromSpec, string toSpec)
@@ -67,8 +81,8 @@ public class GitService
             throw new InvalidOperationException($"Repository {repoInfo.Name} is not cloned");
         }
 
-        _logger.LogWarning("Diff implementation using LibGit2Sharp not yet complete");
-        
+        _logger.LogWarning("Diff implementation using LibGit2Sharp not yet complete - returning stub result");
+
         return new DiffResult
         {
             Repository = repoInfo,
