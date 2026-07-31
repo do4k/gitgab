@@ -29,7 +29,9 @@ public class AnthropicProvider : ILLMProvider
         var llmConfig = _configService.GetLLMConfig();
         var apiKey = llmConfig.ApiKey ?? throw new InvalidOperationException("Anthropic API key is not configured");
         var model = request.Model ?? llmConfig.Model;
-        var baseUrl = llmConfig.BaseUrl;
+        var baseUrl = string.IsNullOrEmpty(llmConfig.BaseUrl)
+            ? "https://api.anthropic.com"
+            : llmConfig.BaseUrl;
 
         var url = $"{baseUrl.TrimEnd('/')}/v1/messages";
 

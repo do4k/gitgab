@@ -5,7 +5,11 @@ public class LLMConfig
     public string Provider { get; set; } = "gemini";
     public string Model { get; set; } = "gemini-2.5-flash";
     public string? ApiKey { get; set; }
-    public string BaseUrl { get; set; } = "https://generativelanguage.googleapis.com";
+    /// <summary>
+    /// Provider-specific base URL. Required for <c>local</c> (e.g. http://localhost:11434).
+    /// For cloud providers this is optional — each provider hard-codes its own default.
+    /// </summary>
+    public string? BaseUrl { get; set; }
     public double Temperature { get; set; } = 0.3;
     public int MaxTokens { get; set; } = 4096;
     public int TimeoutSeconds { get; set; } = 60;

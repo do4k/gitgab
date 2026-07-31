@@ -32,7 +32,8 @@ public class LocalProvider : ILLMProvider
 
         if (string.IsNullOrEmpty(baseUrl))
         {
-            throw new InvalidOperationException("Local LLM base URL is not configured");
+            throw new InvalidOperationException(
+                "Local LLM base URL is not configured. Set LLM:BaseUrl in appsettings (e.g. http://localhost:11434).");
         }
 
         var url = $"{baseUrl.TrimEnd('/')}/v1/chat/completions";
@@ -62,23 +63,45 @@ public class LocalProvider : ILLMProvider
         var stringContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
         var httpClient = _httpClientFactory.CreateClient("GitGabHttpClient");
+
+        // Local models can be slow on first token — apply the configured timeout.
+        httpClient.Timeout = TimeSpan.FromSeconds(llmConfig.TimeoutSeconds > 0 ? llmConfig.TimeoutSeconds : 120);
+
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, url);
         httpRequest.Content = stringContent;
 
-        _logger.LogDebug("Sending request to local LLM API at {Url}", url);
+        _logger.LogDebug("Sending request to local LLM at {Url} (model: {Model}, timeout: {Timeout}s)",
+            url, model, httpClient.Timeout.TotalSeconds);
 
-        var response = await httpClient.SendAsync(httpRequest, ct);
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(httpRequest, ct);
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new TimeoutException(
+                $"Local LLM at {url} did not respond within {httpClient.Timeout.TotalSeconds}s. " +
+                $"Increase LLM:TimeoutSeconds in appsettings if the model needs longer to load.");
+        }
+
         response.EnsureSuccessStatusCode();
 
         var responseJson = await response.Content.ReadAsStringAsync(ct);
 
         using var jsonDoc = JsonDocument.Parse(responseJson);
-        var content = jsonDoc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
-        var modelUsed = jsonDoc.RootElement.GetProperty("model").GetString() ?? model;
+        var root = jsonDoc.RootElement;
 
-        var usage = jsonDoc.RootElement.GetProperty("usage");
-        var inputTokens = usage.GetProperty("prompt_tokens").GetInt32();
-        var outputTokens = usage.GetProperty("completion_tokens").GetInt32();
+        var content = root.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
+        var modelUsed = root.TryGetProperty("model", out var modelProp) ? (modelProp.GetString() ?? model) : model;
+
+        var inputTokens = 0;
+        var outputTokens = 0;
+        if (root.TryGetProperty("usage", out var usageProp))
+        {
+            if (usageProp.TryGetProperty("prompt_tokens", out var pt)) inputTokens = pt.GetInt32();
+            if (usageProp.TryGetProperty("completion_tokens", out var ct2)) outputTokens = ct2.GetInt32();
+        }
 
         return new PromptResponse
         {

@@ -29,7 +29,9 @@ public class GeminiProvider : ILLMProvider
         var llmConfig = _configService.GetLLMConfig();
         var apiKey = llmConfig.ApiKey ?? throw new InvalidOperationException("Gemini API key is not configured");
         var model = request.Model ?? llmConfig.Model;
-        var baseUrl = llmConfig.BaseUrl;
+        var baseUrl = string.IsNullOrEmpty(llmConfig.BaseUrl)
+            ? "https://generativelanguage.googleapis.com"
+            : llmConfig.BaseUrl;
 
         var url = $"{baseUrl.TrimEnd('/')}/v1beta/models/{model}:generateContent";
 
