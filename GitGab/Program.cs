@@ -60,6 +60,7 @@ public static class Program
                 services.AddSingleton<SummaryService>();
                 services.AddSingleton<PromptBuilder>();
                 services.AddSingleton<ConnectorFactory>();
+                services.AddLogging();
 
                 services.AddHttpClient("GitGabHttpClient");
             });

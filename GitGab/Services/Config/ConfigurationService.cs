@@ -57,15 +57,18 @@ public class ConfigurationService
             if (string.IsNullOrEmpty(type) || string.IsNullOrEmpty(name))
                 continue;
 
-            // Create type-specific connector configs
             ConnectorConfig connector = type.ToLower() switch
             {
-                "slack" => new SlackConnectorConfig { Type = type, Name = name, WebhookUrl = child["WebhookUrl"] ?? "" },
-                "email" => new EmailConnectorConfig { Type = type, Name = name, From = child["From"] ?? "" },
-                "file" => new FileConnectorConfig { Type = type, Name = name, Path = child["Path"] ?? "" },
-                "webhook" => new WebhookConnectorConfig { Type = type, Name = name, Url = child["Url"] ?? "" },
+                "slack" => child.Get<SlackConnectorConfig>() ?? new SlackConnectorConfig { Type = type, Name = name },
+                "email" => child.Get<EmailConnectorConfig>() ?? new EmailConnectorConfig { Type = type, Name = name },
+                "file" => child.Get<FileConnectorConfig>() ?? new FileConnectorConfig { Type = type, Name = name },
+                "webhook" => child.Get<WebhookConnectorConfig>() ?? new WebhookConnectorConfig { Type = type, Name = name },
                 _ => new ConsoleConnectorConfig { Type = type, Name = name }
             };
+
+            // Ensure Type/Name are set even if section binding missed them
+            connector.Type = type;
+            connector.Name = name;
 
             connectors.Add(connector);
         }

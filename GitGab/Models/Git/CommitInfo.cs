@@ -3,7 +3,7 @@ namespace GitGab.Models.Git;
 public class CommitInfo
 {
     public string Hash { get; set; } = string.Empty;
-    public string ShortHash => Hash[..7];
+    public string ShortHash => Hash.Length >= 7 ? Hash[..7] : Hash;
     public string Message { get; set; } = string.Empty;
     public string AuthorName { get; set; } = string.Empty;
     public string AuthorEmail { get; set; } = string.Empty;

@@ -7,7 +7,7 @@ public class RepoCommand : Command
     public RepoCommand() : base("repo", "Manage repositories")
     {
         Add(new ListCommand());
-        Add(new AddCommand());
+        Add(new AddRepoCommand());
         Add(new RemoveCommand());
     }
 
@@ -22,9 +22,9 @@ public class RepoCommand : Command
         }
     }
 
-    private class AddCommand : Command
+    private class AddRepoCommand : Command
     {
-        public AddCommand() : base("add", "Add a new repository")
+        public AddRepoCommand() : base("add", "Add a new repository")
         {
             var nameOption = new Option<string>(new[] { "--name", "-n" }, "Repository name");
             var urlOption = new Option<string>(new[] { "--url", "-u" }, "Repository URL");
